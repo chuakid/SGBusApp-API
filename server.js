@@ -67,11 +67,15 @@ app.post("/api/v1/account/login", (req, res) => {
     let email = req.body.email,
         password = crypto.createHash("md5").update((req.body.password)).digest('hex');
     res.locals.connection.query('SELECT id FROM accounts WHERE email=? AND password =?', [email, password], (error, results, fields) => {
-        results = results.length == 0 ? "No such login" : results
         if (error) {
             res.status(400);
             res.json({
                 "error": error,
+            })
+        }
+        else if (results.length == 0){
+            res.status(400).json({
+                "error": "No such login"
             })
         }
         else {
