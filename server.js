@@ -47,7 +47,7 @@ app.get("/api/v1/account/", (req, res) => {
             }
             else if (results.length == 0){
                 res.status(400).json({
-                    "status": 200,
+                    "status": 400,
                     "error": "No such user"
                 })
 
