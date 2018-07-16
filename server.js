@@ -14,46 +14,51 @@ app.listen('3000', () => {
 })
 
 //Server
-app.use(function (req, res, next) {
-    res.locals.connection = mysql.createConnection({
-        host: "127.0.0.1",
-        user: "kelvin",
-        password: password,
-        database: 'SGBusApp'
-    })
-    next();
+var pool = mysql.createPool({
+    host: "127.0.0.1",
+    user: "kelvin",
+    password: password,
+    database: 'SGBusApp'
 })
 
-//Local testing
-// app.use(function (req, res, next) {
-//     res.locals.connection = mysql.createConnection({
-//         host: "127.0.0.1",
-//         user: "root",
-//         password: "",
-//         database: 'sgbusapp'
-//     })
-//     next();
+
+// Local testing
+// var pool = mysql.createPool({
+//     host: "127.0.0.1",
+//     user: "root",
+//     password: "",
+//     database: 'sgbusapp'
 // })
+
+app.use(function (req, res, next) {
+    pool.getConnection((err, connection) => {
+        if (err) {
+            res.json({ "error": err })
+        }
+        else {
+            res.locals.connection = connection;
+            next();
+        }
+    });
+})
+
 
 //Get Account Information
 app.get("/api/v1/account/", (req, res) => {
     if (req.get("token")) {
         res.locals.connection.query('SELECT name,email,mobile from accounts where token=?', [req.get("token")], function (error, results, fields) {
             if (error) {
-                res.status(400);
                 res.json({
                     "error": error,
                 })
             }
-            else if (results.length == 0){
-                res.status(400).json({
+            else if (results.length == 0) {
+                res.json({
                     "status": 400,
                     "error": "No such user"
                 })
-
             }
             else {
-
                 res.json({
                     "status": 200,
                     "error": null,
@@ -63,11 +68,11 @@ app.get("/api/v1/account/", (req, res) => {
         });
     }
     else {
-        res.status(400);
         res.json({
             "error": "Token not found",
         })
     }
+    res.locals.connection.release();
 });
 
 //Login
@@ -76,13 +81,12 @@ app.post("/api/v1/account/login", (req, res) => {
         password = crypto.createHash("md5").update((req.body.password)).digest('hex');
     res.locals.connection.query('SELECT id FROM accounts WHERE email=? AND password =?', [email, password], (error, results, fields) => {
         if (error) {
-            res.status(400);
             res.json({
                 "error": error,
             })
         }
-        else if (results.length == 0){
-            res.status(400).json({
+        else if (results.length == 0) {
+            res.json({
                 "error": "No such login"
             })
         }
@@ -90,7 +94,6 @@ app.post("/api/v1/account/login", (req, res) => {
             var token = crypto.randomBytes(20).toString('hex');
             res.locals.connection.query("UPDATE accounts SET token = ? WHERE email = ?", [token, email], (error, results, fields) => {
                 if (error) {
-                    res.status(400);
                     res.json({
                         "error": error,
                     })
@@ -104,6 +107,8 @@ app.post("/api/v1/account/login", (req, res) => {
             })
         }
     })
+    res.locals.connection.release();
+
 });
 
 //Logout
@@ -128,6 +133,7 @@ app.post("/api/v1/account/logout", (req, res) => {
             "error": "Token not found"
         })
     }
+    res.locals.connection.release();
 })
 
 //Create account
@@ -139,14 +145,12 @@ app.post("/api/v1/account", (req, res) => {
 
     res.locals.connection.query('SELECT * FROM accounts WHERE email=?', [email], (error, results, fields) => {
         if (error) {
-            res.status(400);
             res.json({
                 "error": error,
             })
         }
         else {
             if (results.length > 0) {
-                res.status(400);
                 res.json({
                     "error": "Email in use"
                 })
@@ -154,7 +158,6 @@ app.post("/api/v1/account", (req, res) => {
             else {
                 res.locals.connection.query('INSERT INTO accounts (name,email,password,mobile) VALUES(?,?,?,?)', [name, email, password, mobile], (error, results, fields) => {
                     if (error) {
-                        res.status(400);
                         res.json({
                             "error": error,
                         })
@@ -171,6 +174,9 @@ app.post("/api/v1/account", (req, res) => {
             }
         }
     })
+
+    res.locals.connection.release();
+
 });
 
 //Edit Account
@@ -179,7 +185,6 @@ app.post("/api/v1/account/update", (req, res) => {
         token = req.get("token"),
         mobile = req.body.mobile;
     if (token == undefined) {
-        res.status(400);
         res.json({
             "error": "Token not found",
         })
@@ -187,7 +192,6 @@ app.post("/api/v1/account/update", (req, res) => {
     else {
         res.locals.connection.query('UPDATE accounts SET name=?,mobile=? WHERE token=?', [name, mobile, token], (error, results, fields) => {
             if (error) {
-                res.status(400);
                 res.json({
                     "error": error,
                 })
@@ -200,4 +204,6 @@ app.post("/api/v1/account/update", (req, res) => {
             }
         })
     }
+
+    res.locals.connection.release();
 });
