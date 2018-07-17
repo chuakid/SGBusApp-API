@@ -1,4 +1,3 @@
-const mysql = require("mysql");
 const bodyParser = require("body-parser");
 const express = require('express');
 const crypto = require("crypto");
@@ -14,12 +13,7 @@ app.listen('3000', () => {
 })
 
 //Server
-var pool = mysql.createPool({
-    host: "127.0.0.1",
-    user: "kelvin",
-    password: password,
-    database: 'SGBusApp'
-})
+var pool = require("./createPool.js").pool;
 
 
 // Local testing
