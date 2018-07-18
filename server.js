@@ -232,7 +232,5 @@ app.get("/api/v1/busstops", (req, res) => {
                     })
                 }
             })
-
     }
-    res.locals.connection.release();
 })
