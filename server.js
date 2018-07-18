@@ -219,7 +219,7 @@ app.get("/api/v1/busstops", (req, res) => {
     else {
         res.locals.connection.query('Select (ACOS(SIN(PI()*?/180.0)*SIN(PI()*latitude/180.0)+COS(PI()*?/180.0)*COS(PI()*latitude/180.0)*COS(PI()*longitude/180.0-PI()*?/180.0))*6371) as DISTANCE, busstops.* '
             + "FROM busstops"
-            + " HAVING distance <= ?;", [latitude, latitude, longitude, distance], (error, results, fields) => {
+            + " HAVING distance <= ? ORDER BY distance;", [latitude, latitude, longitude, distance], (error, results, fields) => {
                 if (error) {
                     res.json({
                         "error": error,
