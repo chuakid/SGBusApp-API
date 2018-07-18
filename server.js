@@ -201,3 +201,38 @@ app.post("/api/v1/account/update", (req, res) => {
 
     res.locals.connection.release();
 });
+
+//Get BusStops Nearby
+app.get("/api/v1/busstops", (req, res) => {
+    let latitude = req.query.latitude,
+        longitude = req.query.longitude,
+        distance = req.query.distance;
+    if (distance == undefined) {
+        distance = 1
+    }
+
+    if (latitude == undefined || longitude == undefined) {
+        res.json({
+            "error": "Coordinates not well formed"
+        })
+    }
+    else {
+        res.locals.connection.query('Select (ACOS(SIN(PI()*?/180.0)*SIN(PI()*latitude/180.0)+COS(PI()*?/180.0)*COS(PI()*latitude/180.0)*COS(PI()*longitude/180.0-PI()*?/180.0))*6371) as DISTANCE, busstops.* '
+            + "FROM busstops"
+            + " HAVING distance <= ?;", [latitude, latitude, longitude, distance], (error, results, fields) => {
+                if (error) {
+                    res.json({
+                        "error": error,
+                    })
+                }
+                else {
+                    res.json({
+                        "error": null,
+                        "response": results
+                    })
+                }
+            })
+
+    }
+    res.locals.connection.release();
+})
