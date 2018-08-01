@@ -32,6 +32,9 @@ app.use(function (req, res, next) {
         else {
             res.locals.connection = connection;
             next();
+            res.on("finish", ()=>{
+                res.locals.connection.release();
+            })
         }
     });
 })
@@ -66,7 +69,6 @@ app.get("/api/v1/account/", (req, res) => {
             "error": "Token not found",
         })
     }
-    res.locals.connection.release();
 });
 
 //Login
@@ -101,7 +103,6 @@ app.post("/api/v1/account/login", (req, res) => {
             })
         }
     })
-    res.locals.connection.release();
 
 });
 
@@ -127,7 +128,6 @@ app.post("/api/v1/account/logout", (req, res) => {
             "error": "Token not found"
         })
     }
-    res.locals.connection.release();
 })
 
 //Create account
@@ -168,9 +168,6 @@ app.post("/api/v1/account", (req, res) => {
             }
         }
     })
-
-    res.locals.connection.release();
-
 });
 
 //Edit Account
@@ -198,8 +195,6 @@ app.post("/api/v1/account/update", (req, res) => {
             }
         })
     }
-
-    res.locals.connection.release();
 });
 
 //Get BusStops Nearby
@@ -233,6 +228,4 @@ app.get("/api/v1/busstops", (req, res) => {
                 }
             })
     }
-    res.locals.connection.release();
-
 })
